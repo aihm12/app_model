@@ -17,13 +17,21 @@ jobs:
           python-version: "3.8"
 
       - name: Install dependencies
-        run: pip install ultralytics gdown flask pillow pytesseract numpy opencv-python-headless
+        run: pip install ultralytics flask pillow pytesseract numpy opencv-python-headless
+
+      - name: Verify model file
+        run: |
+          if [ ! -f "models/yolov8_license_plate.pt" ]; then
+            echo "❌ النموذج غير موجود! تأكد من رفعه إلى GitHub."
+            exit 1
+          fi
+          echo "✅ النموذج موجود وجاهز!"
 
       - name: Run prediction script
         run: python app.py
 
       - name: Upload prediction result
-        uses: actions/upload-artifact@v4  # ✅ تم التحديث إلى الإصدار الجديد
+        uses: actions/upload-artifact@v4
         with:
           name: prediction-result
           path: result.json
