@@ -12,7 +12,7 @@ import os
 app = Flask(__name__)
 
 # 🟢 **تحديد مسار النموذج داخل المستودع**
-MODEL_FILE = "models/yolov8_license_plate.pt"
+MODEL_FILE = "yolov8_license_plate.pt"
 
 # **تأكد من أن النموذج موجود**
 if not os.path.exists(MODEL_FILE):
