@@ -74,17 +74,22 @@ def predict():
         with open("result.json", "w") as f:
             json.dump(response, f)
 
+        # 🛑 إنهاء التطبيق بعد الطلب الأول مباشرة
+        shutdown_server()
+
         return jsonify(response)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+def shutdown_server():
+    """إغلاق سيرفر Flask بعد إنهاء التنفيذ"""
+    print("🛑 إيقاف التشغيل التلقائي")
+    os._exit(0)  # إيقاف التطبيق بالكامل
+
 def run_flask():
-    """تشغيل Flask لفترة قصيرة ثم إغلاقه تلقائيًا"""
+    """تشغيل Flask كخادم مؤقت"""
     server = threading.Thread(target=app.run, kwargs={'debug': False, 'host': '0.0.0.0', 'port': 8000})
     server.start()
-    time.sleep(10)  # إبقاء السيرفر نشطًا لمدة 10 ثوانٍ فقط
-    print("🛑 إيقاف التشغيل التلقائي")
-    os._exit(0)  # إغلاق التطبيق نهائيًا
 
 if __name__ == '__main__':
     print("🚀 تشغيل النموذج...")
