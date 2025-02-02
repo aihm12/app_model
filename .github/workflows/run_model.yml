@@ -23,7 +23,7 @@ jobs:
         run: python app.py
 
       - name: Upload prediction result
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4  # ✅ تم التحديث إلى الإصدار الجديد
         with:
           name: prediction-result
           path: result.json
