@@ -1,0 +1,29 @@
+name: Run License Plate Model
+
+on:
+  workflow_dispatch:
+
+jobs:
+  run-model:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v3
+        with:
+          python-version: "3.8"
+
+      - name: Install dependencies
+        run: pip install ultralytics gdown flask pillow pytesseract numpy opencv-python-headless
+
+      - name: Run prediction script
+        run: python app.py
+
+      - name: Upload prediction result
+        uses: actions/upload-artifact@v3
+        with:
+          name: prediction-result
+          path: result.json
