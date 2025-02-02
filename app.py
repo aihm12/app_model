@@ -1,16 +1,11 @@
-import threading
-import time
 import json
 import base64
 import io
 import os
 import numpy as np
-from flask import Flask, request, jsonify
 from ultralytics import YOLO
 from PIL import Image, ImageStat
 import pytesseract
-
-app = Flask(__name__)
 
 # 🟢 تحديد مسار النموذج
 MODEL_FILE = "yolov8_license_plate.pt"
@@ -55,42 +50,29 @@ def process_image(image):
     except Exception as e:
         return None, str(e)
 
-@app.route('/predict', methods=['POST'])
-def predict():
-    """API لاستقبال الصور وتحليلها"""
+def main():
+    """تشغيل المعالجة تلقائيًا عند تشغيل السكريبت"""
     try:
-        data = request.get_json()
-        image_data = data.get('image', None)
-        if not image_data:
-            return jsonify({"error": "❌ لم يتم إرسال صورة"}), 400
+        # فتح الصورة من ملف بدلاً من انتظار HTTP Request
+        image_path = "test_image.jpg"  # 🟢 استبدل بهذا المسار إذا كنت تريد معالجة صورة محددة
+        if not os.path.exists(image_path):
+            raise FileNotFoundError("❌ لم يتم العثور على الصورة! تأكد من رفع الصورة إلى المستودع.")
 
-        image_bytes = base64.b64decode(image_data)
-        image = Image.open(io.BytesIO(image_bytes)).convert('RGB')
+        image = Image.open(image_path).convert('RGB')
 
         response, error = process_image(image)
         if error:
-            return jsonify({"error": error}), 400
+            print(f"❌ خطأ: {error}")
+            return
 
+        # حفظ النتائج في ملف `result.json`
         with open("result.json", "w") as f:
             json.dump(response, f)
 
-        # 🛑 إنهاء التطبيق بعد الطلب الأول مباشرة
-        shutdown_server()
+        print("✅ تمت المعالجة بنجاح! ✅")
 
-        return jsonify(response)
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-def shutdown_server():
-    """إغلاق سيرفر Flask بعد إنهاء التنفيذ"""
-    print("🛑 إيقاف التشغيل التلقائي")
-    os._exit(0)  # إيقاف التطبيق بالكامل
-
-def run_flask():
-    """تشغيل Flask كخادم مؤقت"""
-    server = threading.Thread(target=app.run, kwargs={'debug': False, 'host': '0.0.0.0', 'port': 8000})
-    server.start()
+        print(f"❌ خطأ أثناء المعالجة: {e}")
 
 if __name__ == '__main__':
-    print("🚀 تشغيل النموذج...")
-    run_flask()
+    main()
