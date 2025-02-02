@@ -10,13 +10,20 @@ import pytesseract
 # 🟢 تحديد مسار النموذج
 MODEL_FILE = "yolov8_license_plate.pt"
 
-# **تأكد من أن النموذج موجود**
+# تأكد من أن النموذج موجود
 if not os.path.exists(MODEL_FILE):
     raise FileNotFoundError(f"❌ الملف {MODEL_FILE} غير موجود. تأكد من رفع النموذج إلى GitHub.")
 
 # تحميل النموذج
 print("✅ تحميل النموذج...")
 model = YOLO(MODEL_FILE)
+
+# مسار حفظ النتائج
+RESULTS_DIR = "outputs"
+RESULTS_FILE = os.path.join(RESULTS_DIR, "result.json")
+
+# تأكد من أن مجلد outputs موجود
+os.makedirs(RESULTS_DIR, exist_ok=True)
 
 def process_image(image):
     """تحليل الصورة واستخراج أرقام اللوحة"""
@@ -53,8 +60,7 @@ def process_image(image):
 def main():
     """تشغيل المعالجة تلقائيًا عند تشغيل السكريبت"""
     try:
-        # فتح الصورة من ملف بدلاً من انتظار HTTP Request
-        image_path = "test_image.jpg"  # 🟢 استبدل بهذا المسار إذا كنت تريد معالجة صورة محددة
+        image_path = "test_image.jpg"  # 🟢 تأكد من رفع صورة اختبار إلى المستودع
         if not os.path.exists(image_path):
             raise FileNotFoundError("❌ لم يتم العثور على الصورة! تأكد من رفع الصورة إلى المستودع.")
 
@@ -65,11 +71,11 @@ def main():
             print(f"❌ خطأ: {error}")
             return
 
-        # حفظ النتائج في ملف `result.json`
-        with open("result.json", "w") as f:
+        # 🔹 حفظ النتائج في `outputs/result.json`
+        with open(RESULTS_FILE, "w") as f:
             json.dump(response, f)
 
-        print("✅ تمت المعالجة بنجاح! ✅")
+        print(f"✅ تمت المعالجة بنجاح! تم حفظ النتائج في {RESULTS_FILE}")
 
     except Exception as e:
         print(f"❌ خطأ أثناء المعالجة: {e}")
