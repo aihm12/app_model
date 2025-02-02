@@ -1,47 +1,41 @@
+import time
+import json
+import base64
+import io
+import numpy as np
 from flask import Flask, request, jsonify
 from ultralytics import YOLO
 from PIL import Image, ImageStat
 import pytesseract
-import base64
-import io
-import gdown
-import json
-import time
+import os
 
 app = Flask(__name__)
 
-# 🟢 تحميل النموذج من Google Drive
-MODEL_FILE = "yolov8_license_plate.pt"
-GOOGLE_DRIVE_FILE_ID = "1ewShjHYyro3adOU5IATMd1KQF8HdW_oD"
+# 🟢 **تحديد مسار النموذج داخل المستودع**
+MODEL_FILE = "models/yolov8_license_plate.pt"
 
-def download_model():
-    """تحميل النموذج من Google Drive إذا لم يكن موجودًا"""
-    try:
-        url = f"https://drive.google.com/uc?id={GOOGLE_DRIVE_FILE_ID}"
-        gdown.download(url, MODEL_FILE, quiet=False)
-        print("✅ تم تحميل النموذج بنجاح!")
-    except Exception as e:
-        print(f"❌ خطأ في تحميل النموذج: {e}")
+# **تأكد من أن النموذج موجود**
+if not os.path.exists(MODEL_FILE):
+    raise FileNotFoundError(f"❌ الملف {MODEL_FILE} غير موجود. تأكد من رفع النموذج إلى GitHub.")
 
-# تحميل النموذج عند بدء التشغيل
-download_model()
+# تحميل النموذج
+print("✅ تحميل النموذج...")
 model = YOLO(MODEL_FILE)
 
-
 def process_image(image):
-    """تحليل الصورة لاستخراج أرقام اللوحة"""
+    """تحليل الصورة واستخراج أرقام اللوحة"""
     try:
         results = model.predict(image)
         
-        # استخراج أول صندوق للوحة السيارة
+        # استخراج أول صندوق (إن وجد)
         boxes = results[0].boxes.xyxy.cpu().numpy()
         if len(boxes) == 0:
             return None, "❌ لم يتم العثور على لوحة رقمية"
-        
+
         x_min, y_min, x_max, y_max = map(int, boxes[0])
         cropped_plate = image.crop((x_min, y_min, x_max, y_max))
 
-        # فحص اللون الغالب
+        # تحليل اللون الغالب
         dominant_color = ImageStat.Stat(cropped_plate).mean
         plate_type = "غير معروف"
         if dominant_color[0] > dominant_color[1] and dominant_color[0] > dominant_color[2]:
@@ -51,23 +45,22 @@ def process_image(image):
         elif dominant_color[2] > dominant_color[0] and dominant_color[2] > dominant_color[1]:
             plate_type = "خصوصي"
 
-        # استخراج النصوص باستخدام OCR
+        # تنفيذ OCR لاستخراج النص
         plate_number = pytesseract.image_to_string(
-            cropped_plate, lang="eng", config="--psm 7"
+            cropped_plate, lang="eng", config="--psm 7 -c tessedit_char_whitelist=0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         ).strip()
 
         return {
-            'coordinates': [x_min, y_min, x_max, y_max],
-            'plate_number': plate_number,
-            'plate_type': plate_type
+            "coordinates": [x_min, y_min, x_max, y_max],
+            "plate_number": plate_number,
+            "plate_type": plate_type
         }, None
     except Exception as e:
         return None, str(e)
 
-
 @app.route('/predict', methods=['POST'])
 def predict():
-    """API لتحليل الصور المرسلة"""
+    """API لاستقبال الصور وتحليلها"""
     try:
         data = request.get_json()
         image_data = data.get('image', None)
@@ -78,10 +71,10 @@ def predict():
         image_bytes = base64.b64decode(image_data)
         image = Image.open(io.BytesIO(image_bytes)).convert('RGB')
 
-        # تحليل الصورة
+        # معالجة الصورة والحصول على النتائج
         response, error = process_image(image)
         if error:
-            return jsonify({'error': error}), 400
+            return jsonify({"error": error}), 400
 
         # حفظ النتائج في ملف `result.json`
         with open("result.json", "w") as f:
@@ -89,13 +82,12 @@ def predict():
 
         return jsonify(response)
     except Exception as e:
-        return jsonify({'error': str(e)}), 500
+        return jsonify({"error": str(e)}), 500
 
-
-# ✅ تشغيل Flask لمدة محددة ثم إغلاق التطبيق تلقائيًا
+# 🛑 تشغيل التطبيق مؤقتًا ثم الإغلاق تلقائيًا بعد 10 ثوانٍ
 if __name__ == '__main__':
-    print("🚀 تشغيل النموذج وتحليل الصورة...")
+    print("🚀 تشغيل النموذج...")
     app.run(debug=False, host='0.0.0.0', port=8000)
-    time.sleep(10)  # تشغيل السيرفر لمدة 10 ثوانٍ فقط
+    time.sleep(10)  # تشغيل السيرفر لمدة قصيرة
     print("🛑 إيقاف التشغيل التلقائي")
     exit(0)
