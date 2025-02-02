@@ -12,7 +12,7 @@ MODEL_FILE = "yolov8_license_plate.pt"
 
 # تأكد من أن النموذج موجود
 if not os.path.exists(MODEL_FILE):
-    raise FileNotFoundError(f"❌ الملف {MODEL_FILE} غير موجود. تأكد من رفع النموذج إلى GitHub.")
+    raise FileNotFoundError(f"❌ الملف {MODEL_FILE} غير موجود. تأكد من رفعه إلى GitHub.")
 
 # تحميل النموذج
 print("✅ تحميل النموذج...")
@@ -31,6 +31,7 @@ def process_image(image):
         results = model.predict(image)
         boxes = results[0].boxes.xyxy.cpu().numpy()
         if len(boxes) == 0:
+            print("❌ لم يتم العثور على لوحة رقمية")
             return None, "❌ لم يتم العثور على لوحة رقمية"
 
         x_min, y_min, x_max, y_max = map(int, boxes[0])
@@ -49,12 +50,15 @@ def process_image(image):
             cropped_plate, lang="eng", config="--psm 7 -c tessedit_char_whitelist=0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         ).strip()
 
+        print(f"✅ لوحة السيارة: {plate_number}, النوع: {plate_type}")
+
         return {
             "coordinates": [x_min, y_min, x_max, y_max],
             "plate_number": plate_number,
             "plate_type": plate_type
         }, None
     except Exception as e:
+        print(f"❌ خطأ أثناء التحليل: {e}")
         return None, str(e)
 
 def main():
