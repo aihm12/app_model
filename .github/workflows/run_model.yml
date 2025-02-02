@@ -17,11 +17,11 @@ jobs:
           python-version: "3.8"
 
       - name: Install dependencies
-        run: pip install ultralytics flask pillow pytesseract numpy opencv-python-headless
+        run: pip install ultralytics pillow pytesseract numpy opencv-python-headless
 
       - name: Verify model file
         run: |
-          if [ ! -f "yolov8_license_plate.pt" ]; then
+          if [ ! -f "models/yolov8_license_plate.pt" ]; then
             echo "❌ النموذج غير موجود! تأكد من رفعه إلى GitHub."
             exit 1
           fi
