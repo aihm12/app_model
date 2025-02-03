@@ -6,20 +6,19 @@ import numpy as np
 from ultralytics import YOLO
 from PIL import Image, ImageStat
 import pytesseract
+from flask import Flask, request, jsonify
 
-# 🟢 تحديد مسار النموذج
+app = Flask(__name__)
+
 MODEL_FILE = "yolov8_license_plate.pt"
 
-# **تأكد من أن النموذج موجود**
 if not os.path.exists(MODEL_FILE):
     raise FileNotFoundError(f"❌ الملف {MODEL_FILE} غير موجود. تأكد من رفع النموذج إلى GitHub.")
 
-# تحميل النموذج
 print("✅ تحميل النموذج...")
 model = YOLO(MODEL_FILE)
 
 def process_image(image):
-    """تحليل الصورة واستخراج أرقام اللوحة"""
     try:
         results = model.predict(image)
         boxes = results[0].boxes.xyxy.cpu().numpy()
@@ -50,29 +49,24 @@ def process_image(image):
     except Exception as e:
         return None, str(e)
 
-def main():
-    """تشغيل المعالجة تلقائيًا عند تشغيل السكريبت"""
+@app.route('/predict', methods=['POST'])
+def predict():
     try:
-        # فتح الصورة من ملف بدلاً من انتظار HTTP Request
-        image_path = "test_image.jpg"  # 🟢 استبدل بهذا المسار إذا كنت تريد معالجة صورة محددة
-        if not os.path.exists(image_path):
-            raise FileNotFoundError("❌ لم يتم العثور على الصورة! تأكد من رفع الصورة إلى المستودع.")
+        data = request.get_json()
+        image_data = data.get('image', None)
+        if not image_data:
+            return jsonify({"error": "❌ لم يتم إرسال صورة"}), 400
 
-        image = Image.open(image_path).convert('RGB')
+        image_bytes = base64.b64decode(image_data)
+        image = Image.open(io.BytesIO(image_bytes)).convert('RGB')
 
         response, error = process_image(image)
         if error:
-            print(f"❌ خطأ: {error}")
-            return
+            return jsonify({"error": error}), 400
 
-        # حفظ النتائج في ملف `result.json`
-        with open("result.json", "w") as f:
-            json.dump(response, f)
-
-        print("✅ تمت المعالجة بنجاح! ✅")
-
+        return jsonify(response)
     except Exception as e:
-        print(f"❌ خطأ أثناء المعالجة: {e}")
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    main()
+    app.run(debug=False, host='0.0.0.0', port=8000)
