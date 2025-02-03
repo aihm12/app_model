@@ -7,6 +7,8 @@ from ultralytics import YOLO
 from PIL import Image, ImageStat
 import pytesseract
 
+pytesseract.pytesseract.tesseract_cmd = "/usr/bin/tesseract"  # تأكد من أن هذا هو المسار الصحيح على Ubuntu
+
 MODEL_FILE = "yolov8_license_plate.pt"
 
 if not os.path.exists(MODEL_FILE):
