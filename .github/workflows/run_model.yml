@@ -17,7 +17,15 @@ jobs:
           python-version: "3.8"
 
       - name: Install dependencies
-        run: pip install ultralytics pillow pytesseract numpy opencv-python-headless
+        run: pip install ultralytics pillow pytesseract numpy opencv-python-headless flask
+
+      - name: Install Tesseract OCR
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y tesseract-ocr
+
+      - name: Verify Tesseract installation
+        run: tesseract --version
 
       - name: Verify model file
         run: |
@@ -27,11 +35,5 @@ jobs:
           fi
           echo "✅ النموذج موجود وجاهز!"
 
-      - name: Run prediction script
-        run: python app.py
-
-      - name: Upload prediction result
-        uses: actions/upload-artifact@v4
-        with:
-          name: prediction-result
-          path: result.json
+      - name: Run Flask API
+        run: python app.py &
