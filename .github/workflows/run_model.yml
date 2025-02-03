@@ -30,16 +30,8 @@ jobs:
       - name: Run prediction script
         run: python app.py
 
-      - name: Check if result.json exists
-        run: |
-          if [ ! -f "outputs/result.json" ]; then
-            echo "❌ ملف النتائج غير موجود! تحقق من `app.py`."
-            exit 1
-          fi
-          echo "✅ ملف النتائج تم إنشاؤه بنجاح!"
-
       - name: Upload prediction result
         uses: actions/upload-artifact@v4
         with:
           name: prediction-result
-          path: outputs/result.json
+          path: result.json
