@@ -39,5 +39,19 @@ jobs:
           fi
           echo "✅ النموذج موجود وجاهز!"
 
-      - name: Run Flask API
-        run: python app.py &
+      - name: Run prediction script
+        run: python app.py
+
+      - name: Verify result.json file
+        run: |
+          if [ ! -f "result.json" ]; then
+            echo "❌ ملف `result.json` غير موجود! تحقق من `app.py`."
+            exit 1
+          fi
+          echo "✅ ملف `result.json` موجود!"
+
+      - name: Upload prediction result
+        uses: actions/upload-artifact@v4
+        with:
+          name: prediction-result
+          path: result.json
