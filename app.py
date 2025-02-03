@@ -10,20 +10,13 @@ import pytesseract
 # 🟢 تحديد مسار النموذج
 MODEL_FILE = "yolov8_license_plate.pt"
 
-# تأكد من أن النموذج موجود
+# **تأكد من أن النموذج موجود**
 if not os.path.exists(MODEL_FILE):
-    raise FileNotFoundError(f"❌ الملف {MODEL_FILE} غير موجود. تأكد من رفعه إلى GitHub.")
+    raise FileNotFoundError(f"❌ الملف {MODEL_FILE} غير موجود. تأكد من رفع النموذج إلى GitHub.")
 
 # تحميل النموذج
 print("✅ تحميل النموذج...")
 model = YOLO(MODEL_FILE)
-
-# مسار حفظ النتائج
-RESULTS_DIR = "outputs"
-RESULTS_FILE = os.path.join(RESULTS_DIR, "result.json")
-
-# تأكد من أن مجلد outputs موجود
-os.makedirs(RESULTS_DIR, exist_ok=True)
 
 def process_image(image):
     """تحليل الصورة واستخراج أرقام اللوحة"""
@@ -31,7 +24,6 @@ def process_image(image):
         results = model.predict(image)
         boxes = results[0].boxes.xyxy.cpu().numpy()
         if len(boxes) == 0:
-            print("❌ لم يتم العثور على لوحة رقمية")
             return None, "❌ لم يتم العثور على لوحة رقمية"
 
         x_min, y_min, x_max, y_max = map(int, boxes[0])
@@ -50,21 +42,19 @@ def process_image(image):
             cropped_plate, lang="eng", config="--psm 7 -c tessedit_char_whitelist=0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ"
         ).strip()
 
-        print(f"✅ لوحة السيارة: {plate_number}, النوع: {plate_type}")
-
         return {
             "coordinates": [x_min, y_min, x_max, y_max],
             "plate_number": plate_number,
             "plate_type": plate_type
         }, None
     except Exception as e:
-        print(f"❌ خطأ أثناء التحليل: {e}")
         return None, str(e)
 
 def main():
     """تشغيل المعالجة تلقائيًا عند تشغيل السكريبت"""
     try:
-        image_path = "test_image.jpg"  # 🟢 تأكد من رفع صورة اختبار إلى المستودع
+        # فتح الصورة من ملف بدلاً من انتظار HTTP Request
+        image_path = "test_image.jpg"  # 🟢 استبدل بهذا المسار إذا كنت تريد معالجة صورة محددة
         if not os.path.exists(image_path):
             raise FileNotFoundError("❌ لم يتم العثور على الصورة! تأكد من رفع الصورة إلى المستودع.")
 
@@ -75,11 +65,11 @@ def main():
             print(f"❌ خطأ: {error}")
             return
 
-        # 🔹 حفظ النتائج في `outputs/result.json`
-        with open(RESULTS_FILE, "w") as f:
+        # حفظ النتائج في ملف `result.json`
+        with open("result.json", "w") as f:
             json.dump(response, f)
 
-        print(f"✅ تمت المعالجة بنجاح! تم حفظ النتائج في {RESULTS_FILE}")
+        print("✅ تمت المعالجة بنجاح! ✅")
 
     except Exception as e:
         print(f"❌ خطأ أثناء المعالجة: {e}")
