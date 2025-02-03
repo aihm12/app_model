@@ -24,6 +24,9 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y tesseract-ocr
 
+      - name: Check Tesseract Path
+        run: which tesseract
+
       - name: Verify Tesseract installation
         run: tesseract --version
 
