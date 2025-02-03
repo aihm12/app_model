@@ -21,13 +21,15 @@ jobs:
 
       - name: Install Tesseract OCR
         run: |
-          sudo apt install tesseract-ocr
-
-      - name: Verify Tesseract installation
-        run: tesseract --version
+          sudo apt-get update
+          sudo apt-get install -y tesseract-ocr tesseract-ocr-eng libtesseract-dev libleptonica-dev
+          echo "✅ Tesseract Installed!"
 
       - name: Check Tesseract Path
         run: which tesseract
+
+      - name: Verify Tesseract installation
+        run: tesseract --version
 
       - name: Verify model file
         run: |
